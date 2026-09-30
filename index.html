@@ -161,6 +161,33 @@ dialog.alchemy-loading{position:fixed;inset:0;width:100vw;max-width:none;height:
 @keyframes alchemyTurn{0%{transform:perspective(800px) rotateX(58deg) rotateY(-12deg) rotateZ(0)}50%{transform:perspective(800px) rotateX(42deg) rotateY(16deg) rotateZ(180deg)}100%{transform:perspective(800px) rotateX(58deg) rotateY(-12deg) rotateZ(360deg)}}
 @media(prefers-reduced-motion:reduce){.alchemy-circle{animation:none;transform:perspective(800px) rotateX(35deg) rotateZ(20deg)}dialog.alchemy-loading{transition:none}}
 
+
+.productivity-panel{max-width:1040px;width:100%;margin-inline:auto}
+.productivity-panel .panel-head{background:#ffffff03}
+.planner-form{margin-bottom:20px}.planner-form label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:8px}
+.planner-inputs{display:flex;gap:12px}.planner-inputs input{flex:1;min-width:0}
+.planner-inputs .btn,.calendar-inputs .btn{width:auto;white-space:nowrap}
+.planner-form input{border-radius:12px;background:#ffffff05;border:1px solid var(--line);width:100%;min-height:46px}
+.calendar-inputs{display:grid;grid-template-columns:minmax(0,1fr) minmax(150px,.5fr) auto;align-items:end;gap:14px}
+.planner-list{padding:0;margin:18px 0;list-style:none;display:grid;gap:10px}
+.planner-row{display:flex;align-items:center;gap:14px;position:relative;padding:17px 16px;border:1px solid var(--line);border-radius:14px;background:#ffffff03;transition:border-color .2s,background .2s}
+.planner-row:hover{border-color:#ffffff40;background:#ffffff06}
+.planner-row label{display:flex;align-items:center;gap:12px;flex:1;min-width:0;cursor:pointer}
+.planner-row input[type=checkbox]{width:20px;height:20px;flex:0 0 auto;accent-color:var(--gold)}
+.planner-copy{min-width:0;overflow-wrap:anywhere}.planner-copy strong{font-weight:500;line-height:1.5}
+.planner-copy small{display:block;color:var(--muted);margin-top:4px}
+.planner-row.is-done .planner-copy strong{text-decoration:line-through;color:var(--muted)}
+.planner-row.is-done{background:#ffffff02}.planner-xp{color:var(--gold);white-space:nowrap;font-size:.8rem}
+.planner-history{border-top:1px solid var(--line);padding-top:18px;margin-top:26px}.planner-history summary{cursor:pointer;color:var(--muted);font-size:.9rem}
+.planner-heading{margin-top:26px;font-size:1rem}.event-date-badge{display:grid;place-items:center;min-width:54px;padding:9px 7px;border:1px solid var(--line);border-radius:12px;color:var(--gold);background:#ffffff04}
+.event-date-badge strong{font-size:1.2rem}.event-date-badge small{font-size:.65rem;text-transform:uppercase;letter-spacing:.08em}
+.routine-reward{animation:routinePulse .75s ease-out}.routine-reward::after{content:attr(data-xp-reward);position:absolute;right:60px;top:4px;color:var(--gold);font-weight:700;pointer-events:none;animation:routineFloat 1s ease-out both}
+@keyframes routinePulse{35%{border-color:var(--gold);box-shadow:0 0 20px #e2bd702e}}
+@keyframes routineFloat{from{opacity:1;transform:translateY(0)}to{opacity:0;transform:translateY(-28px)}}
+@media(max-width:1099px){#game-tabs{overflow-x:auto;justify-content:flex-start}#game-tabs button{flex:0 0 94px;min-width:94px}}
+@media(max-width:600px){.planner-inputs{flex-direction:column}.planner-inputs .btn,.calendar-inputs .btn{width:100%}.calendar-inputs{grid-template-columns:minmax(0,1fr)}.planner-row{gap:10px;padding:14px 12px}.planner-xp{font-size:.72rem}}
+@media(prefers-reduced-motion:reduce){.routine-reward,.routine-reward::after{animation:none}}
+
 </style>
 </head>
 <body>
@@ -216,6 +243,25 @@ dialog.alchemy-loading{position:fixed;inset:0;width:100vw;max-width:none;height:
     </section>
   </div>
 <section id="friends-panel" class="panel friends-panel" aria-labelledby="friends-title"><div class="panel-head"><div><h2 id="friends-title"><span class="num">VI.</span>Painel de amigos</h2><p>As lendas do seu reino, por experiência e Gold.</p></div><button id="friends-refresh" class="gear" type="button" aria-label="Atualizar ranking">↻</button></div><div class="content"><ol id="friends-list" class="friends-list"></ol><p id="friends-status" class="helper" role="status">Entre para ver os aventureiros.</p></div></section>
+<section id="routine-panel" class="panel productivity-panel" aria-labelledby="routine-title">
+  <div class="panel-head"><div><p class="eyebrow">Um passo de cada vez</p><h2 id="routine-title">Rotina & Missões</h2><p>Transforma os teus planos em pequenas conquistas.</p></div><span id="routine-count" class="counter">0 ativas</span></div>
+  <div class="content">
+    <form id="routine-form" class="planner-form"><label for="routine-name">Nova missão</label><div class="planner-inputs"><input id="routine-name" maxlength="140" required autocomplete="off" placeholder="Ex.: preparar a apresentação"><button id="routine-add" class="btn primary" type="submit">Adicionar</button></div></form>
+    <p id="routine-hint" class="helper"></p>
+    <ul id="routine-list" class="planner-list" aria-label="Missões ativas"></ul>
+    <details class="planner-history"><summary>Missões concluídas <span id="routine-done-count"></span></summary><ul id="routine-history" class="planner-list"></ul></details>
+  </div>
+</section>
+<section id="calendar-panel" class="panel productivity-panel" aria-labelledby="calendar-title">
+  <div class="panel-head"><div><p class="eyebrow">Espaço para o que importa</p><h2 id="calendar-title">Calendário de Eventos</h2><p>Os teus próximos compromissos, por ordem de data.</p></div><button id="calendar-retry" class="gear" type="button" aria-label="Atualizar calendário">↻</button></div>
+  <div class="content">
+    <form id="calendar-form" class="planner-form"><div class="calendar-inputs"><div><label for="calendar-name">Nome do evento</label><input id="calendar-name" maxlength="140" required autocomplete="off" placeholder="Ex.: encontro com amigos"></div><div><label for="event-date">Data</label><input id="event-date" type="date" required></div><button id="event-add" class="btn primary" type="submit">Adicionar evento</button></div></form>
+    <p id="calendar-status" class="helper" role="status" aria-live="polite"></p><p id="calendar-feedback" class="helper" role="status" aria-live="polite"></p>
+    <h3 class="planner-heading">Próximos Eventos</h3>
+    <ul id="calendar-list" class="planner-list" aria-label="Próximos eventos"></ul>
+    <details class="planner-history"><summary>Eventos passados e concluídos</summary><ul id="calendar-history" class="planner-list"></ul></details>
+  </div>
+</section>
 </main>
 <footer><span>❖ Toda grande jornada é feita de pequenos hábitos.</span><span id="save-status">Entre para acessar seu progresso na nuvem</span></footer>
 </div>
@@ -236,6 +282,9 @@ service cloud.firestore {
   match /databases/{database}/documents {
     match /users/{name} {
       allow read, write: if true;
+      match /calendario/{eventId} {
+        allow read, write: if true;
+      }
     }
     match /configuracoes/sistema {
       allow read: if true;
@@ -252,7 +301,7 @@ service cloud.firestore {
   <p id="key-status" class="helper" role="status" aria-live="polite"></p>
   <button id="reload-services" class="btn subtle" type="button">Atualizar serviços</button>
   <form id="settings-form"><fieldset class="settings-theme"><legend>Cores do reino</legend><div><label for="theme-gold">Cor de Destaque</label><input id="theme-gold" type="color" value="#e2bd70"></div><div><label for="theme-bg">Cor de Fundo</label><input id="theme-bg" type="color" value="#141815"></div></fieldset><div class="actions"><button class="btn primary" type="submit">Guardar preferências</button></div></form>
-  <div class="settings-reset"><button id="reset-progress" class="btn danger" type="button">Apagar Progresso (Reset)</button><p>Apaga o progresso do jogador atual na nuvem, em todos os dispositivos. As preferências locais e a configuração partilhada dos serviços são preservadas.</p></div>
+  <div class="settings-reset"><button id="reset-progress" class="btn danger" type="button">Apagar Progresso (Reset)</button><p>Apaga o progresso do jogador atual na nuvem, em todos os dispositivos. O calendário, as preferências locais e a configuração partilhada dos serviços são preservados.</p></div>
 </dialog>
 <dialog id="sage-dialog" aria-labelledby="sage-title">
   <div class="dialog-head"><h2 id="sage-title">Desafio do Sábio</h2><button class="remove" data-close="sage-dialog" aria-label="Cancelar desafio">×</button></div>
@@ -305,7 +354,7 @@ const pick=a=>a[Math.floor(random()*a.length)],rollEvent=()=>Math.floor(random()
 const AVATARS=['🧙','🧝','🧛','🦊','🐉','🦉','🤖','⚔️'];
 function profileOf(s={}){const p=s.profile||{};return {avatar:AVATARS.includes(p.avatar)?p.avatar:'🧙',primaryColor:/^#[0-9a-f]{6}$/i.test(p.primaryColor||'')?p.primaryColor:'#e2bd70'};}
 function validProfile(p){return !!p&&AVATARS.includes(p.avatar)&&/^#[0-9a-f]{6}$/i.test(p.primaryColor);}
-const fresh=()=>({version:2,catalogVersion:4,gold:0,xp:0,cycle:Date.now(),done:[],media:[],inventory:{},combo:0,keys:0,claimed:false,event:rollEvent(),stats:emptyStats(),achievements:[],profile:profileOf()});
+const fresh=()=>({version:2,catalogVersion:4,gold:0,xp:0,cycle:Date.now(),done:[],media:[],inventory:{},combo:0,keys:0,claimed:false,event:rollEvent(),stats:emptyStats(),achievements:[],profile:profileOf(),routine:[]});
 const level=xp=>Math.floor((1+Math.sqrt(1+xp/25))/2),threshold=l=>100*l*(l-1),title=l=>classes.find(([min])=>l>=min)[1];
 const emptyStats=()=>({totalQuests:0,chestsOpened:0,forgesDone:0,booksRead:0,filmsWatched:0,musicListened:0});
 const achievementDefs=[
@@ -320,7 +369,7 @@ const achievementDefs=[
 function upgradeStats(s){
   const baseline={...emptyStats(),totalQuests:Array.isArray(s.done)?s.done.length:0,booksRead:Array.isArray(s.media)?s.media.filter(m=>m?.done&&m.kind==='book').length:0,filmsWatched:Array.isArray(s.media)?s.media.filter(m=>m?.done&&m.kind==='film').length:0,musicListened:Array.isArray(s.media)?s.media.filter(m=>m?.done&&isMusic(m.kind)).length:0};
   if(s.stats!==undefined&&(!s.stats||typeof s.stats!=='object'||Array.isArray(s.stats)))throw Error('Estatísticas inválidas');
-  return {...s,profile:profileOf(s),stats:{...baseline,...s.stats},achievements:s.achievements===undefined?[]:s.achievements};
+  return {...s,routine:s.routine===undefined?[]:s.routine,profile:profileOf(s),stats:{...baseline,...s.stats},achievements:s.achievements===undefined?[]:s.achievements};
 }
 function validStats(s){
   return s.stats&&typeof s.stats==='object'&&!Array.isArray(s.stats)&&Object.keys(emptyStats()).every(k=>int(s.stats[k]))&&Array.isArray(s.achievements)&&new Set(s.achievements).size===s.achievements.length&&s.achievements.every(id=>achievementDefs.some(a=>a.id===id));
@@ -405,7 +454,7 @@ async function toggleSound(){
 }
 
 function validBase(s){return s&&int(s.gold)&&int(s.cycle)&&s.cycle>0&&Array.isArray(s.done)&&s.done.every(id=>quests.some(q=>q.id===id))&&new Set(s.done).size===s.done.length&&Array.isArray(s.media)&&s.media.every(m=>m&&typeof m.id==='string'&&m.id.length>0&&Object.hasOwn(mediaTypes,m.kind)&&typeof m.title==='string'&&m.title.trim().length>0&&m.title.length<=100&&typeof m.done==='boolean')&&new Set(s.media.map(m=>m.id)).size===s.media.length&&s.inventory&&typeof s.inventory==='object'&&!Array.isArray(s.inventory)&&Object.entries(s.inventory).every(([id,n])=>catalog.some(i=>String(i.id)===id)&&int(n));}
-function valid(s){return validBase(s)&&validStats(s)&&validProfile(s.profile)&&s.version===2&&s.catalogVersion===4&&[s.xp,s.combo,s.keys,s.event].every(int)&&s.event<events.length&&typeof s.claimed==='boolean'&&s.claimed===(s.done.length===quests.length)&&s.media.every(m=>int(m.retryAt)&&(!m.pending||(typeof m.pending.token==='string'&&int(m.pending.until))));}
+function valid(s){return validBase(s)&&validStats(s)&&validRoutine(s.routine)&&validProfile(s.profile)&&s.version===2&&s.catalogVersion===4&&[s.xp,s.combo,s.keys,s.event].every(int)&&s.event<events.length&&typeof s.claimed==='boolean'&&s.claimed===(s.done.length===quests.length)&&s.media.every(m=>int(m.retryAt)&&(!m.pending||(typeof m.pending.token==='string'&&int(m.pending.until))));}
 function readLocal(){
   const raw=localStorage.getItem(KEY);if(raw){const s=upgradeStats(upgradeCatalog(JSON.parse(raw)));if(!valid(s))throw Error('Progresso inválido');return s;}
   const old=localStorage.getItem(LEGACY);if(!old)return fresh();
@@ -502,7 +551,7 @@ function renderInventory(){
   $('#items').innerHTML=owned.map(i=>{const q=quote(i),count=state.inventory[i.id],tier=tiers[i.tier];return `<article class="item" style="--rarity:var(${tier[2]})"><div class="item-top"><span class="item-icon" aria-hidden="true">${i.icon}</span><span class="quantity">×${count}</span></div><span class="rarity">${tier[0]}</span><h3>${i.name}</h3><span class="game-tag">${esc(i.game)}</span><div class="price"><strong>${q.value} Gold</strong><span class="change ${q.percent>=0?'up':'down'}">${q.percent>=0?'+':''}${q.percent}%</span></div><button class="btn" data-sell="${i.id}" ${count<2||blocked||opening?'disabled':''}>${count>1?'Vender 1 cópia':'Peça da coleção'}</button>${count>=3&&i.tier<4?`<button class="btn forge" data-forge="${i.id}" ${blocked||opening?'disabled':''}>⚒ Forjar 3 · ${tiers[i.tier+1][0]}</button>`:''}</article>`;}).join('')||'<p class="empty">✧ Sua coleção ainda está por escrever.<br>Conclua missões e abra seu primeiro baú.</p>';
 }
 function render(){
-  renderProfile();
+  renderProfile();renderProductivity();
   countGold(state.gold);const l=level(state.xp),current=state.xp-threshold(l),needed=threshold(l+1)-threshold(l);
   $('#rank').textContent=`Nv. ${l} · ${title(l)}`;$('#xp-label').textContent=`${fmt(current)} / ${fmt(needed)} XP`;
   $('#xp-fill').style.width=current/needed*100+'%';$('#xp-track').setAttribute('aria-valuenow',current);$('#xp-track').setAttribute('aria-valuemax',needed);
@@ -805,11 +854,11 @@ document.addEventListener('pointerdown',event=>{if(!$('#media-search').contains(
 ['gold','bg'].forEach(key=>$('#theme-'+key).addEventListener('input',()=>applyTheme({gold:$('#theme-gold').value,bg:$('#theme-bg').value})));
 $('#settings-dialog').addEventListener('close',initTheme);
 $('#reset-progress').addEventListener('click',async()=>{
-  if(!loggedIn||!confirm('Apagar o progresso de '+playerName+' na nuvem, em todos os dispositivos? Esta ação não pode ser desfeita. As preferências locais e os serviços partilhados serão mantidos.'))return;
+  if(!loggedIn||!confirm('Apagar o progresso de '+playerName+' na nuvem, em todos os dispositivos? Esta ação não pode ser desfeita. O calendário, as preferências locais e os serviços partilhados serão mantidos.'))return;
   const wasBlocked=blocked;blocked=true;$('#reset-progress').disabled=true;closeSearch();resetMusicSearch();
   if(validation){validation.cancelled=true;validation.controller.abort();}
   try{
-    await queue;
+    await Promise.all([queue,calendarQueue]);
     await cloud.runTransaction(cloud.db,async transaction=>{const previous=await read(transaction),next=fresh();next.cloudRevision=previous.cloudRevision+1;transaction.set(playerRef,next);});
     location.reload();
   }catch(error){blocked=wasBlocked;$('#reset-progress').disabled=false;storageError(error);render();}
@@ -1059,7 +1108,7 @@ function change(fn=()=>({})){
       if(next.cloudRevision>=(state.cloudRevision||0))state=next;
       cloudHealthy();
       const after=level(next.xp);if(after>before)result.message=(result.message||'')+` ✨ Nível ${after}: ${title(after)}!`;
-      render();if(next.stats.totalQuests>oldQuests){celebrateQuest(next);playSFX('check');}if(next.gold>oldGold)playSFX('coin',next.stats.totalQuests>oldQuests?.12:0);
+      render();if(next.stats.totalQuests>oldQuests){if(result.routineId)celebrateRoutine(result.routineId,result.routineXP);else celebrateQuest(next);playSFX('check');}if(next.gold>oldGold)playSFX('coin',next.stats.totalQuests>oldQuests?.12:0);
       if(after>before)animate($('#hero-bar'),'level-up');if(result.message)notify(result.message);
       if(after>before||unlocked.length)playSFX('levelUp',.25);
       if(unlocked.length)notify('🏆 Conquista desbloqueada! '+unlocked.map(a=>a.name+' · '+a.game).join(' | '),true);
@@ -1114,14 +1163,14 @@ async function loginPlayer(event){
     playerName=name;playerRef=ref;state=saved.next;loggedIn=true;cloudHealthy();
     try{localStorage.setItem(PLAYER_KEY,name);if(saved.imported)localStorage.setItem(IMPORT_KEY,name);}catch(error){console.error('[Firestore] Preferência local:',error);}
     $('#player-label').textContent=name;render();
-    watchPlayer();loadFriends();if(Date.now()-state.cycle>=DAY)await change();
+    watchPlayer();loadFriends();watchCalendar();if(Date.now()-state.cycle>=DAY)await change();
     await minimumLoading;
     $('#login-dialog').close();$('#app-shell').hidden=false;
     overlay.classList.add('is-leaving');await pause(reduced.matches?0:280);
     overlay.close();$('#app-shell').inert=false;$('#tab-'+activePage).focus();
   }catch(error){
     console.error('[Firestore] Login:',error);
-    loggedIn=false;blocked=true;stopPlayer?.();stopFriends?.();stopPlayer=null;stopFriends=null;
+    loggedIn=false;blocked=true;stopPlayer?.();stopFriends?.();stopCalendarWatch();stopPlayer=null;stopFriends=null;
     $('#app-shell').hidden=true;$('#app-shell').inert=true;
     overlay.close();if(!$('#login-dialog').open)$('#login-dialog').showModal();
     $('#login-status').textContent=cloudMessage(error);$('#player-name').focus();
@@ -1139,18 +1188,20 @@ async function sync(){
 }
 $('#login-form').addEventListener('submit',loginPlayer);
 $('#login-dialog').addEventListener('cancel',event=>event.preventDefault());
-$('#cloud-retry').addEventListener('click',async()=>{await sync();if(!blocked){watchPlayer();loadFriends();}});
+$('#cloud-retry').addEventListener('click',async()=>{await sync();if(!blocked){watchPlayer();loadFriends();watchCalendar();}});
 $('#friends-refresh').addEventListener('click',loadFriends);
-$('#switch-player').addEventListener('click',async()=>{if(opening||validation)return;await queue;location.reload();});
-window.addEventListener('online',()=>{loadSystemConfig(true);sync();if(loggedIn)loadFriends();});
-window.addEventListener('pagehide',()=>{stopPlayer?.();stopFriends?.();});
-window.addEventListener('pageshow',event=>{if(event.persisted&&loggedIn){watchPlayer();loadFriends();sync();}});
+$('#switch-player').addEventListener('click',async()=>{if(opening||validation)return;await Promise.all([queue,calendarQueue]);location.reload();});
+window.addEventListener('online',()=>{loadSystemConfig(true);sync();if(loggedIn){loadFriends();watchCalendar();}});
+window.addEventListener('pagehide',()=>{stopPlayer?.();stopFriends?.();stopCalendarWatch();});
+window.addEventListener('pageshow',event=>{if(event.persisted&&loggedIn){watchPlayer();loadFriends();watchCalendar();sync();}});
 
 
 let profileDirty=false,profileBusy=false,activePage='quests';
 const flippedCards=new Set();
 const pageDefs=[
   ['quests','⚔️','Missões Diárias',['quests']],
+  ['routine','✅','Rotina & Missões',['routine-panel']],
+  ['calendar','📅','Calendário',['calendar-panel']],
   ['grimoire','📚','Grimório',['library','discoteca']],
   ['inventory','💎','Inventário',['shop','inventory']],
   ['friends','🛡️','Painel de Amigos',['friends-panel']],
@@ -1163,7 +1214,7 @@ function activatePage(id,focus=false){
     const selected=key===id,button=$('#tab-'+key),panel=$('#page-'+key);
     panel.hidden=!selected;panel.inert=!selected;
     button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;
-    if(selected&&changed)animate(panel,'tab-enter');
+    if(selected&&changed){animate(panel,'tab-enter');button.scrollIntoView({block:'nearest',inline:'nearest',behavior:reduced.matches?'auto':'smooth'});}
   }
   if(focus)$('#tab-'+id).focus();
 }
@@ -1273,13 +1324,145 @@ function initGameUI(){
   renderProfile();
 }
 
+
+const ROUTINE_XP=25,ROUTINE_LIMIT=200;
+let routineAdding=false,calendarBusy=false,calendarReady=false,calendarQueue=Promise.resolve();
+let calendarRecords=[],calendarProblem='',calendarOwner='',calendarDay='',calendarGeneration=0,stopCalendar=null;
+const routinePending=new Set();
+function validRoutine(items){
+  return Array.isArray(items)&&items.length<=ROUTINE_LIMIT&&new Set(items.map(t=>t?.id)).size===items.length&&items.every(t=>t&&typeof t.id==='string'&&t.id.length>0&&typeof t.title==='string'&&t.title.trim().length>0&&t.title.length<=140&&typeof t.done==='boolean'&&int(t.createdAt)&&(t.completedAt===null||int(t.completedAt))&&int(t.earnedXP));
+}
+function addRoutine(s,task){
+  if(s.routine.length>=ROUTINE_LIMIT)return {message:'Limite de 200 missões. Remove algumas concluídas para criar espaço.'};
+  if(s.routine.some(t=>t.id===task.id))return {};
+  s.routine.push(task);return {added:true};
+}
+function completeRoutine(s,id){
+  const task=s.routine.find(t=>t.id===id);if(!task||task.done)return {};
+  const xp=Math.round(ROUTINE_XP*events[s.event].xp);
+  task.done=true;task.completedAt=Date.now();task.earnedXP=xp;s.xp+=xp;s.stats.totalQuests++;
+  return {routineId:id,routineXP:xp,message:'Missão concluída! +'+xp+' XP.'};
+}
+function renderRoutine(){
+  if(!$('#routine-list'))return;
+  const tasks=state.routine||[],xp=Math.round(ROUTINE_XP*events[state.event].xp);
+  const row=t=>'<li class="planner-row '+(t.done?'is-done':'')+'" data-routine-row="'+esc(t.id)+'"><label><input type="checkbox" data-routine="'+esc(t.id)+'" '+(t.done?'checked disabled':blocked||routinePending.has(t.id)?'disabled':'')+'><span class="planner-copy"><strong>'+esc(t.title)+'</strong><small>'+(t.done?'Concluída':'Um pequeno passo para hoje')+'</small></span></label><span class="planner-xp">+'+(t.done?t.earnedXP:xp)+' XP</span><button type="button" class="remove" data-routine-remove="'+esc(t.id)+'" aria-label="Remover '+esc(t.title)+'" '+(blocked||routinePending.has(t.id)?'disabled':'')+'>×</button></li>';
+  const active=tasks.filter(t=>!t.done),done=tasks.filter(t=>t.done).sort((a,b)=>b.completedAt-a.completedAt);
+  $('#routine-list').innerHTML=active.map(row).join('')||'<li class="empty">Uma página livre. Qual é o teu próximo passo?</li>';
+  $('#routine-history').innerHTML=done.map(row).join('')||'<li class="empty">As tuas conquistas aparecerão aqui.</li>';
+  $('#routine-count').textContent=active.length+' ativas';$('#routine-done-count').textContent='('+done.length+')';
+  $('#routine-hint').textContent='+'+xp+' XP por missão · recompensa única · '+tasks.length+'/'+ROUTINE_LIMIT+' guardadas';
+  $('#routine-name').disabled=blocked||routineAdding;$('#routine-add').disabled=blocked||routineAdding||tasks.length>=ROUTINE_LIMIT;
+}
+function celebrateRoutine(id,xp){
+  const row=$$('[data-routine-row]').find(el=>el.dataset.routineRow===id);if(!row)return;
+  $('#routine-history').closest('details').open=true;row.dataset.xpReward='+'+xp+' XP';
+  if(!reduced.matches)animate(row,'routine-reward');
+}
+function localDay(date=new Date()){return String(date.getFullYear()).padStart(4,'0')+'-'+String(date.getMonth()+1).padStart(2,'0')+'-'+String(date.getDate()).padStart(2,'0');}
+function validEventDate(value){
+  if(typeof value!=='string'||!/^\d{4}-\d{2}-\d{2}$/.test(value)||value.startsWith('0000'))return false;
+  const date=new Date(value+'T12:00:00');return !Number.isNaN(date.getTime())&&localDay(date)===value;
+}
+function validCalendarEvent(item){return item&&typeof item.title==='string'&&item.title.trim().length>0&&item.title.length<=140&&validEventDate(item.date)&&typeof item.done==='boolean';}
+function calendarError(error){
+  console.error('[Calendário]',{code:error?.code||'unknown'});
+  return String(error?.code||'').includes('permission-denied')?'Sem acesso ao calendário. Publique a regra de users/{nome}/calendario/{evento} no Firestore.':'Não foi possível sincronizar o calendário. Verifique a ligação e tente atualizar.';
+}
+function renderCalendar(){
+  if(!$('#calendar-list'))return;
+  calendarDay=localDay();
+  const sorted=[...calendarRecords].sort((a,b)=>a.date.localeCompare(b.date)||a.title.localeCompare(b.title,'pt-PT')||a.id.localeCompare(b.id));
+  const upcoming=sorted.filter(e=>!e.done&&e.date>=calendarDay),history=sorted.filter(e=>e.done||e.date<calendarDay);
+  const row=e=>{
+    const date=new Date(e.date+'T12:00:00'),label=new Intl.DateTimeFormat('pt-PT',{dateStyle:'long'}).format(date),month=new Intl.DateTimeFormat('pt-PT',{month:'short'}).format(date);
+    return '<li class="planner-row '+(e.done?'is-done':'')+'"><div class="event-date-badge" aria-hidden="true"><strong>'+date.getDate()+'</strong><small>'+esc(month)+'</small></div><label><input type="checkbox" data-calendar-complete="'+esc(e.id)+'" '+(e.done?'checked disabled':blocked||calendarBusy||!calendarReady?'disabled':'')+'><span class="planner-copy"><strong>'+esc(e.title)+'</strong><small><time datetime="'+e.date+'">'+esc(label)+'</time> · '+(e.done?'Concluído':e.date===calendarDay?'Hoje':e.date<calendarDay?'Passado':'Agendado')+'</small></span></label></li>';
+  };
+  $('#calendar-list').innerHTML=upcoming.map(row).join('')||'<li class="empty">'+(calendarReady?'Sem próximos eventos. Reserva espaço para algo importante.':'A aguardar o calendário…')+'</li>';
+  $('#calendar-history').innerHTML=history.map(row).join('')||'<li class="empty">Ainda não há eventos no histórico.</li>';
+  $('#calendar-status').textContent=calendarProblem||(calendarReady?upcoming.length+' próximos eventos · sincronização em tempo real':'A ligar ao calendário…');
+  for(const id of ['calendar-name','event-date','event-add'])$('#'+id).disabled=blocked||calendarBusy||!calendarReady;
+  $('#calendar-retry').disabled=!loggedIn||calendarBusy;
+}
+function stopCalendarWatch(){calendarGeneration++;stopCalendar?.();stopCalendar=null;}
+function watchCalendar(){
+  stopCalendarWatch();if(!loggedIn||!playerRef)return;
+  const generation=calendarGeneration,owner=playerName;
+  if(calendarOwner!==owner){calendarOwner=owner;calendarRecords=[];}
+  calendarReady=false;calendarProblem='';renderCalendar();
+  try{
+    const query=cloud.query(cloud.collection(playerRef,'calendario'),cloud.orderBy('date','asc'));
+    stopCalendar=cloud.onSnapshot(query,{includeMetadataChanges:true},snapshot=>{
+      if(generation!==calendarGeneration||owner!==playerName||snapshot.metadata.hasPendingWrites)return;
+      calendarRecords=snapshot.docs.map(doc=>({...doc.data(),id:doc.id})).filter(validCalendarEvent);
+      calendarReady=!snapshot.metadata.fromCache;
+      calendarProblem=snapshot.metadata.fromCache?'Calendário em cache · a aguardar ligação.':calendarRecords.length!==snapshot.docs.length?'Alguns eventos têm dados inválidos e não foram apresentados.':'';
+      renderCalendar();
+    },error=>{if(generation!==calendarGeneration)return;calendarReady=false;calendarProblem=calendarError(error);renderCalendar();});
+  }catch(error){calendarReady=false;calendarProblem=calendarError(error);renderCalendar();}
+}
+function calendarChange(id,update){
+  if(!loggedIn||blocked||calendarBusy||!calendarReady)return Promise.resolve(false);
+  calendarBusy=true;renderCalendar();const owner=playerRef;
+  calendarQueue=(async()=>{
+    try{
+      const ref=cloud.doc(owner,'calendario',id);
+      return await cloud.runTransaction(cloud.db,async transaction=>{
+        const parent=await transaction.get(owner);if(!parent.exists())throw Error('Perfil ausente');
+        const snapshot=await transaction.get(ref),next=update(snapshot.exists()?snapshot.data():null);
+        if(!next)return false;if(!validCalendarEvent(next))throw Error('Evento inválido');
+        transaction.set(ref,next);return true;
+      });
+    }catch(error){calendarProblem=calendarError(error);$('#calendar-feedback').textContent=calendarProblem;return false;}
+    finally{calendarBusy=false;renderCalendar();}
+  })();
+  return calendarQueue;
+}
+function renderProductivity(){renderRoutine();renderCalendar();}
+function initProductivity(){
+  $('#routine-form').addEventListener('submit',async event=>{
+    event.preventDefault();if(blocked||routineAdding)return;
+    const title=$('#routine-name').value.trim();if(!title||title.length>140)return;
+    const task={id:uid(),title,done:false,createdAt:Date.now(),completedAt:null,earnedXP:0};
+    routineAdding=true;renderRoutine();
+    try{const result=await change(s=>addRoutine(s,task));if(result?.added)$('#routine-name').value='';}
+    finally{routineAdding=false;renderRoutine();$('#routine-name').focus();}
+  });
+  $('#routine-panel').addEventListener('change',async event=>{
+    const id=event.target.dataset.routine;if(!id||blocked||routinePending.has(id))return;
+    event.target.checked=false;routinePending.add(id);renderRoutine();
+    try{await change(s=>completeRoutine(s,id));}
+    finally{routinePending.delete(id);for(const input of $('[data-routine]'))if(input.dataset.routine===id)input.disabled=blocked||state.routine.find(t=>t.id===id)?.done;for(const button of $('[data-routine-remove]'))if(button.dataset.routineRemove===id)button.disabled=blocked;}
+  });
+  $('#routine-panel').addEventListener('click',async event=>{
+    const button=event.target.closest('[data-routine-remove]');if(!button||blocked)return;
+    const id=button.dataset.routineRemove;if(routinePending.has(id))return;
+    routinePending.add(id);renderRoutine();
+    try{await change(s=>{s.routine=s.routine.filter(t=>t.id!==id);return {};});}
+    finally{routinePending.delete(id);renderRoutine();}
+  });
+  $('#calendar-form').addEventListener('submit',async event=>{
+    event.preventDefault();if(calendarBusy||blocked||!calendarReady)return;
+    const title=$('#calendar-name').value.trim(),date=$('#event-date').value;
+    if(!title||title.length>140||!validEventDate(date)){$('#calendar-feedback').textContent='Preenche um nome e uma data válidos.';return;}
+    const id=uid(),item={title,date,done:false,createdAt:Date.now(),completedAt:null};
+    if(await calendarChange(id,current=>current?null:item)){$('#calendar-name').value='';$('#event-date').value='';$('#calendar-feedback').textContent='Evento guardado.';}
+  });
+  $('#calendar-panel').addEventListener('change',async event=>{
+    const id=event.target.dataset.calendarComplete;if(!id)return;event.target.checked=false;
+    if(await calendarChange(id,item=>!item||item.done?null:{...item,done:true,completedAt:Date.now()}))$('#calendar-feedback').textContent='Evento concluído.';
+  });
+  $('#calendar-retry').addEventListener('click',watchCalendar);
+  renderProductivity();
+}
+
 async function start(){
   try{writePreferences();}catch{console.warn('[Preferências] Não foi possível limpar a configuração local antiga.');}
-  initGameUI();initTheme();initSound();loadSystemConfig();
+  initGameUI();initProductivity();initTheme();initSound();loadSystemConfig();
   try{$('#player-name').value=localStorage.getItem(PLAYER_KEY)||'';const canImport=!!(localStorage.getItem(KEY)||localStorage.getItem(LEGACY))&&!localStorage.getItem(IMPORT_KEY);$('#import-local-label').hidden=!canImport;$('#import-local').checked=canImport;}catch(error){console.error('[Firebase] Save local indisponível:',error);}
   modal('login-dialog');
   window.firebaseReady.then(ready=>{if(ready.error)$('#login-status').textContent=cloudMessage(ready.error);});
-  setInterval(()=>{if(!loggedIn)return;timers();if(!blocked&&Date.now()-state.cycle>=DAY)sync();if(lastMarket!==Math.floor(Date.now()/HOUR))renderInventory();},1000);
+  setInterval(()=>{if(!loggedIn)return;timers();if(calendarDay!==localDay())renderCalendar();if(!blocked&&Date.now()-state.cycle>=DAY)sync();if(lastMarket!==Math.floor(Date.now()/HOUR))renderInventory();},1000);
 }
 start();
 
