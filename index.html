@@ -1,6 +1,28 @@
 <!doctype html>
 <html lang="pt-BR">
 <head>
+<script>window.firebaseReady=new Promise(resolve=>{window.resolveFirebase=resolve;});</script>
+<script type="module">
+const firebaseConfig = {
+  apiKey: '',
+  authDomain: '',
+  projectId: '',
+  storageBucket: '',
+  messagingSenderId: '',
+  appId: ''
+};
+try {
+  if(!firebaseConfig.apiKey||!firebaseConfig.projectId||!firebaseConfig.appId)throw Error('Preencha firebaseConfig no início do index.html com a configuração Web do seu Firebase.');
+  const [{initializeApp},firestore]=await Promise.all([
+    import('https://www.gstatic.com/firebasejs/9.23.0/firebase-app.js'),
+    import('https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js')
+  ]);
+  const db=firestore.getFirestore(initializeApp(firebaseConfig));
+  window.resolveFirebase({db,...firestore});
+}catch(error){console.error('[Firebase] Inicialização:',error);window.resolveFirebase({error});}
+delete window.resolveFirebase;
+</script>
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#171b18">
@@ -79,9 +101,11 @@ main{padding-block:clamp(28px,3vw,48px) 32px}.intro{display:flex;align-items:cen
 #music-lists .media-cover.mini,#music-lists .media-cover.mini img{height:30px}
 .music-source{display:block;margin-top:5px;color:var(--gold);font-size:.7rem}
 
+[hidden]{display:none!important}.cloud-setup{margin-top:24px;font-size:.85rem;color:var(--muted)}.cloud-setup summary{cursor:pointer;color:var(--gold)}.cloud-setup pre{overflow:auto;padding:12px;border:1px solid var(--line);border-radius:6px}.import-local{display:flex!important;align-items:flex-start;gap:10px;font-size:.85rem}.import-local input{width:auto;flex:0 0 auto;margin-top:4px}#player-label{color:var(--gold);overflow-wrap:anywhere}.friends-panel{margin-top:var(--gap)}.friends-list{list-style:none;padding:0;margin:0}.friend-row{display:flex;gap:12px;align-items:center;padding:14px 0;border-bottom:1px solid var(--line)}.friend-row>div{flex:1;min-width:0;overflow-wrap:anywhere}.friend-row small{display:block;color:var(--muted);margin-top:4px}.friend-row.self strong,.friend-gold{color:var(--gold)}.friend-gold{font-size:.8rem;text-align:right}.friend-position{color:var(--muted);font-size:.8rem}#friends-status{margin-top:16px}#storage-warning .btn{width:auto;margin-left:12px}#login-dialog{max-width:520px}
 </style>
 </head>
 <body>
+<div id="app-shell" hidden inert>
 <a href="#main" class="skip">Ir para as missões</a>
 <header class="topbar">
   <div class="bar">
@@ -91,13 +115,13 @@ main{padding-block:clamp(28px,3vw,48px) 32px}.intro{display:flex;align-items:cen
     <div class="header-actions"><button id="sound-toggle" class="gear" type="button" aria-label="Silenciar sons" aria-pressed="false" title="Silenciar sons">🔊</button><button id="settings" class="gear" aria-label="Configurar API do sábio" title="Configurar API do sábio">⚙</button></div>
   </div>
   <div id="hero-bar" class="hero-bar">
-    <strong id="rank" class="rank">Nv. 1 · Aprendiz</strong>
+    <span id="player-label"></span><button id="switch-player" class="btn subtle" type="button">Trocar jogador</button><strong id="rank" class="rank">Nv. 1 · Aprendiz</strong>
     <div class="xp-wrap"><div class="xp-caption"><span>Experiência</span><span id="xp-label">0 / 200 XP</span></div><div id="xp-track" class="track" role="progressbar" aria-label="Experiência para o próximo nível" aria-valuemin="0" aria-valuemax="200" aria-valuenow="0"><div id="xp-fill"></div></div></div>
     <button id="achievements-button" class="achievements-button" type="button" aria-label="Abrir conquistas"><span aria-hidden="true">🏆</span><span id="achievement-count" aria-hidden="true">0/7</span></button><div class="badges"><span title="Chaves de Cristal">🗝️ <strong id="keys">0</strong></span></div>
   </div>
 </header>
 <div class="event"><div class="event-inner"><strong id="event-name"></strong><span id="event-description" class="muted"></span></div></div>
-<div id="storage-warning" role="alert" hidden></div>
+<div id="storage-warning" role="alert" hidden><span id="cloud-error"></span><button id="cloud-retry" class="btn" type="button">Reconectar</button></div>
 <main id="main">
   <div class="intro"><div><p class="eyebrow">Pequenos feitos. Grandes conquistas.</p><h1>A aventura começa na rotina.</h1><p>Conquiste conhecimento. Forje relíquias. Escreva sua lenda.</p></div><div class="seal"><span class="eyebrow">Sua coleção</span><strong id="collection">0 / 56 relíquias</strong></div></div>
   <div class="grid">
@@ -124,13 +148,36 @@ main{padding-block:clamp(28px,3vw,48px) 32px}.intro{display:flex;align-items:cen
       <div class="content"><div id="items" class="items"></div><p class="inventory-note">A venda preserva sua última cópia. A forja consome 3 cópias, inclusive a última, e entrega 1 item do tier superior. Lendários não podem ser forjados. Cotações variam até 25% por hora, antes do bônus do evento. Gold e itens são fictícios.</p></div>
     </section>
   </div>
+<section id="friends-panel" class="panel friends-panel" aria-labelledby="friends-title"><div class="panel-head"><div><h2 id="friends-title"><span class="num">VI.</span>Painel de amigos</h2><p>As lendas do seu reino, por experiência e Gold.</p></div><button id="friends-refresh" class="gear" type="button" aria-label="Atualizar ranking">↻</button></div><div class="content"><ol id="friends-list" class="friends-list"></ol><p id="friends-status" class="helper" role="status">Entre para ver os aventureiros.</p></div></section>
 </main>
-<footer><span>❖ Toda grande jornada é feita de pequenos hábitos.</span><span id="save-status">Progresso salvo neste navegador</span></footer>
+<footer><span>❖ Toda grande jornada é feita de pequenos hábitos.</span><span id="save-status">Entre para acessar seu progresso na nuvem</span></footer>
+</div>
+<dialog id="login-dialog" aria-labelledby="login-title">
+  <p class="eyebrow">Crônicas do Cotidiano · Jornada compartilhada</p>
+  <h2 id="login-title">Como devemos chamar você?</h2>
+  <p>Digite sempre o mesmo nome para continuar sua jornada em outro dispositivo. Quem usa o mesmo nome acessa o mesmo progresso.</p>
+  <form id="login-form">
+    <label for="player-name">Nome do jogador</label>
+    <input id="player-name" name="playerName" required maxlength="80" autocomplete="nickname" placeholder="Ex.: João" autofocus>
+    <label id="import-local-label" class="import-local" hidden><input id="import-local" type="checkbox"> Importar o progresso deste navegador se este nome ainda não existir.</label>
+    <p id="login-status" class="feedback" role="status" aria-live="polite"></p>
+    <button id="login-submit" class="btn primary" type="submit">Entrar</button>
+  </form>
+  <details class="cloud-setup"><summary>Configurar o Firebase pela primeira vez</summary><p>Crie um app Web e o banco Cloud Firestore no console Firebase. Cole a configuração em <code>firebaseConfig</code>, no início deste HTML. Para este projeto sem autenticação, publique estas regras simples:</p><pre><code>rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{name} {
+      allow read, write: if true;
+    }
+  }
+}</code></pre><p>Essas regras permitem acesso público aos perfis. As chaves pessoais de APIs ficam apenas no navegador. Depois de salvar o HTML, recarregue a página.</p></details>
+</dialog>
+
 <div id="notice" role="status" aria-live="polite" aria-atomic="true"></div>
 <dialog id="settings-dialog" aria-labelledby="settings-title">
   <div class="dialog-head"><h2 id="settings-title">Conselho dos Sábios</h2><button class="remove" data-close="settings-dialog" aria-label="Fechar configurações">×</button></div>
   <p class="helper">Use sua chave pessoal do <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio</a>. A chave fica salva neste navegador, sem criptografia. Título e resumo são enviados ao Google somente ao validar; o uso pode consumir sua cota da API.</p>
-  <form id="settings-form"><label for="api-key">API Key do Gemini</label><input id="api-key" type="password" autocomplete="off" maxlength="300" placeholder="Cole sua chave pessoal"><label for="api-model">Modelo</label><input id="api-model" type="text" required maxlength="80" pattern="[a-zA-Z0-9._\-]+" value="gemini-3.5-flash-lite"><p id="key-status" class="helper"></p><p class="helper"><a href="https://ai.google.dev/api" target="_blank" rel="noopener noreferrer">Documentação da API</a> · <a href="https://ai.google.dev/gemini-api/docs/models" target="_blank" rel="noopener noreferrer">Modelos disponíveis</a></p><label for="tmdb-key">TMDB API Key (Opcional)</label><input id="tmdb-key" type="password" autocomplete="off" maxlength="300" placeholder="Chave de API v3 do TMDB"><p class="helper">Habilita notas reais e capas do TMDB para filmes. Deixe vazio e salve para usar o iTunes. A chave fica salva neste navegador. <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener noreferrer">Obter chave</a></p><label for="spotify-client-id">Spotify Client ID (Opcional)</label><input id="spotify-client-id" type="text" autocomplete="off" maxlength="300" placeholder="Client ID do Spotify"><label for="spotify-client-secret">Spotify Client Secret (Opcional)</label><input id="spotify-client-secret" type="password" autocomplete="off" maxlength="300" placeholder="Client Secret do Spotify"><p class="helper">As credenciais ficam neste navegador, sem criptografia. Em um HTML local o segredo não fica protegido. Use suas próprias credenciais; deixe ambos os campos vazios para usar o iTunes. <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener noreferrer">Spotify for Developers</a></p><fieldset class="settings-theme"><legend>Cores do reino</legend><div><label for="theme-gold">Cor de Destaque</label><input id="theme-gold" type="color" value="#e2bd70"></div><div><label for="theme-bg">Cor de Fundo</label><input id="theme-bg" type="color" value="#141815"></div></fieldset><div class="actions"><button class="btn primary" type="submit">Salvar configuração</button><button id="remove-key" class="btn subtle" type="button">Remover chave</button></div></form><div class="settings-reset"><button id="reset-progress" class="btn danger" type="button">Apagar Progresso (Reset)</button><p>Apaga as conquistas e obras deste navegador. A API Key e as cores são preservadas.</p></div>
+  <form id="settings-form"><label for="api-key">API Key do Gemini</label><input id="api-key" type="password" autocomplete="off" maxlength="300" placeholder="Cole sua chave pessoal"><label for="api-model">Modelo</label><input id="api-model" type="text" required maxlength="80" pattern="[a-zA-Z0-9._\-]+" value="gemini-3.5-flash-lite"><p id="key-status" class="helper"></p><p class="helper"><a href="https://ai.google.dev/api" target="_blank" rel="noopener noreferrer">Documentação da API</a> · <a href="https://ai.google.dev/gemini-api/docs/models" target="_blank" rel="noopener noreferrer">Modelos disponíveis</a></p><label for="tmdb-key">TMDB API Key (Opcional)</label><input id="tmdb-key" type="password" autocomplete="off" maxlength="300" placeholder="Chave de API v3 do TMDB"><p class="helper">Habilita notas reais e capas do TMDB para filmes. Deixe vazio e salve para usar o iTunes. A chave fica salva neste navegador. <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener noreferrer">Obter chave</a></p><label for="spotify-client-id">Spotify Client ID (Opcional)</label><input id="spotify-client-id" type="text" autocomplete="off" maxlength="300" placeholder="Client ID do Spotify"><label for="spotify-client-secret">Spotify Client Secret (Opcional)</label><input id="spotify-client-secret" type="password" autocomplete="off" maxlength="300" placeholder="Client Secret do Spotify"><p class="helper">As credenciais ficam neste navegador, sem criptografia. Em um HTML local o segredo não fica protegido. Use suas próprias credenciais; deixe ambos os campos vazios para usar o iTunes. <a href="https://developer.spotify.com/dashboard" target="_blank" rel="noopener noreferrer">Spotify for Developers</a></p><fieldset class="settings-theme"><legend>Cores do reino</legend><div><label for="theme-gold">Cor de Destaque</label><input id="theme-gold" type="color" value="#e2bd70"></div><div><label for="theme-bg">Cor de Fundo</label><input id="theme-bg" type="color" value="#141815"></div></fieldset><div class="actions"><button class="btn primary" type="submit">Salvar configuração</button><button id="remove-key" class="btn subtle" type="button">Remover chave</button></div></form><div class="settings-reset"><button id="reset-progress" class="btn danger" type="button">Apagar Progresso (Reset)</button><p>Apaga o progresso do jogador atual na nuvem, em todos os dispositivos. As chaves de API e as cores deste navegador são preservadas.</p></div>
 </dialog>
 <dialog id="sage-dialog" aria-labelledby="sage-title">
   <div class="dialog-head"><h2 id="sage-title">Desafio do Sábio</h2><button class="remove" data-close="sage-dialog" aria-label="Cancelar desafio">×</button></div>
@@ -281,7 +328,7 @@ async function toggleSound(){
 
 function validBase(s){return s&&int(s.gold)&&int(s.cycle)&&s.cycle>0&&Array.isArray(s.done)&&s.done.every(id=>quests.some(q=>q.id===id))&&new Set(s.done).size===s.done.length&&Array.isArray(s.media)&&s.media.every(m=>m&&typeof m.id==='string'&&m.id.length>0&&Object.hasOwn(mediaTypes,m.kind)&&typeof m.title==='string'&&m.title.trim().length>0&&m.title.length<=100&&typeof m.done==='boolean')&&new Set(s.media.map(m=>m.id)).size===s.media.length&&s.inventory&&typeof s.inventory==='object'&&!Array.isArray(s.inventory)&&Object.entries(s.inventory).every(([id,n])=>catalog.some(i=>String(i.id)===id)&&int(n));}
 function valid(s){return validBase(s)&&validStats(s)&&s.version===2&&s.catalogVersion===4&&[s.xp,s.combo,s.keys,s.event].every(int)&&s.event<events.length&&typeof s.claimed==='boolean'&&s.claimed===(s.done.length===quests.length)&&s.media.every(m=>int(m.retryAt)&&(!m.pending||(typeof m.pending.token==='string'&&int(m.pending.until))));}
-function read(){
+function readLocal(){
   const raw=localStorage.getItem(KEY);if(raw){const s=upgradeStats(upgradeCatalog(JSON.parse(raw)));if(!valid(s))throw Error('Progresso inválido');return s;}
   const old=localStorage.getItem(LEGACY);if(!old)return fresh();
   const s=JSON.parse(old);if(s.version!==1||!validBase(s))throw Error('Progresso antigo inválido');
@@ -292,7 +339,7 @@ function reset(s,now=Date.now()){
   if(elapsed>1||!s.claimed)s.combo=0;
   s.cycle+=elapsed*DAY;s.done=[];s.claimed=false;s.event=rollEvent();return true;
 }
-let state=fresh(),blocked=false,queue=Promise.resolve(),opening=false,noticeTimer,lastMarket=-1;
+let state=fresh(),blocked=true,queue=Promise.resolve(),opening=false,noticeTimer,lastMarket=-1;
 let shownGold=0,goldTarget=-1,goldFrame=0,challenge=null,validation=null;
 const drafts=new Map(),ratingDrafts=new Map();
 const validPersonal=n=>Number.isInteger(n)&&n>=1&&n<=5;
@@ -308,20 +355,6 @@ function notify(message,golden=false){
 function feedback(message,error=false){if(error)playSFX('error');$('#sage-feedback').textContent=message;$('#sage-feedback').classList.toggle('error',error);}
 function animate(el,name){el.classList.remove(name);void el.offsetWidth;el.classList.add(name);}
 function modal(id){const el=$('#'+id);if(!el.open){el.showModal();animate(el,'reveal');}return el;}
-function storageError(){blocked=true;$('#storage-warning').hidden=false;$('#storage-warning').textContent='Não foi possível ler ou salvar o progresso. Verifique o armazenamento do navegador e recarregue. Os dados existentes foram preservados.';$('#save-status').textContent='Salvamento indisponível';notify('A ação não foi salva. Verifique o armazenamento.');}
-function change(fn=()=>({})){
-  const job=async()=>{
-    if(blocked)return null;
-    const commit=()=>{const next=read();reset(next);const before=level(next.xp),oldGold=next.gold,oldQuests=next.stats.totalQuests,result=fn(next)||{},unlocked=unlockAchievements(next);if(!valid(next))throw Error('Estado inválido');localStorage.setItem(KEY,JSON.stringify(next));state=next;
-      const after=level(next.xp);if(after>before)result.message=(result.message||'')+` ✨ Nível ${after}: ${title(after)}!`;
-      render();if(next.stats.totalQuests>oldQuests)playSFX('check');if(next.gold>oldGold)playSFX('coin',next.stats.totalQuests>oldQuests?.12:0);
-      if(after>before)animate($('#hero-bar'),'level-up');if(result.message)notify(result.message);
-      if(after>before||unlocked.length)playSFX('levelUp',.25);
-      if(unlocked.length)notify('🏆 Conquista desbloqueada! '+unlocked.map(a=>a.name+' · '+a.game).join(' | '),true);return result;};
-    try{return navigator.locks?await navigator.locks.request(KEY,commit):commit();}catch{storageError();render();return null;}
-  };
-  const result=queue.then(job);queue=result.catch(()=>{});return result;
-}
 function award(s,gold,xp,daily=false){const e=events[s.event],g=Math.round(gold*(daily?e.gold:1)),x=Math.round(xp*e.xp);s.gold+=g;s.xp+=x;return `+${g} Gold · +${x} XP`;}
 function completeQuest(s,id,cycle){
   if(s.cycle!==cycle)return {message:'Um novo ciclo começou. Confira as missões atuais.'};
@@ -511,8 +544,7 @@ $('#personal-rating').addEventListener('change',()=>{const n=selectedRating();if
 $('#sage-form').addEventListener('submit',validateSummary);
 $('#sage-dialog').addEventListener('close',()=>{if(validation){validation.cancelled=true;validation.controller.abort();}challenge=null;});
 $('#odds').innerHTML=tiers.map(([name,chance,color])=>`<span style="color:var(${color})">${name}<b>${chance}%</b></span>`).join('');
-function sync(){if(blocked)return;try{const next=read();if(Date.now()-next.cycle>=DAY){change();return;}state=next;render();}catch{storageError();render();}}
-window.addEventListener('storage',event=>{if(event.key===KEY||event.key===null)sync();if(event.key===CONFIG||event.key===null){initSound();resetMusicSearch();}});
+window.addEventListener('storage',event=>{if(event.key===CONFIG||event.key===null){initSound();resetMusicSearch();}});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)sync();});window.addEventListener('focus',sync);
 const DEFAULT_COLORS={gold:'#e2bd70',bg:'#141815'};
 const color=v=>typeof v==='string'&&/^#[0-9a-f]{6}$/i.test(v);
@@ -628,15 +660,14 @@ document.addEventListener('pointerdown',event=>{if(!$('#media-search').contains(
 ['gold','bg'].forEach(key=>$('#theme-'+key).addEventListener('input',()=>applyTheme({gold:$('#theme-gold').value,bg:$('#theme-bg').value})));
 $('#settings-dialog').addEventListener('close',initTheme);
 $('#reset-progress').addEventListener('click',async()=>{
-  if(!confirm('Apagar todo o progresso? Gold, XP, obras, relíquias, chaves e combo serão apagados. Sua API Key e cores serão mantidas. Esta ação não pode ser desfeita.'))return;
+  if(!loggedIn||!confirm('Apagar o progresso de '+playerName+' na nuvem, em todos os dispositivos? Esta ação não pode ser desfeita. Suas configurações locais serão mantidas.'))return;
   const wasBlocked=blocked;blocked=true;$('#reset-progress').disabled=true;closeSearch();resetMusicSearch();
   if(validation){validation.cancelled=true;validation.controller.abort();}
   try{
     await queue;
-    const clear=()=>{localStorage.removeItem(LEGACY);localStorage.removeItem(KEY);};
-    if(navigator.locks)await navigator.locks.request(KEY,clear);else clear();
+    await cloud.runTransaction(cloud.db,async transaction=>{const previous=await read(transaction),next=fresh();next.cloudRevision=previous.cloudRevision+1;transaction.set(playerRef,next);});
     location.reload();
-  }catch{blocked=wasBlocked;$('#reset-progress').disabled=false;render();notify('Não foi possível apagar o progresso. Verifique o armazenamento.');}
+  }catch(error){blocked=wasBlocked;$('#reset-progress').disabled=false;storageError(error);render();}
 });
 
 let musicChoice=null,musicAdding=false,musicTimer,musicController,musicSeq=0,musicActive=-1,musicResults=[];
@@ -837,7 +868,129 @@ $('#music-form').addEventListener('submit',async event=>{
 $('#music-lists').addEventListener('change',event=>{const id=event.target.dataset.media;if(id){event.target.checked=false;openChallenge(id);}});
 $('#music-lists').addEventListener('click',event=>{const b=event.target.closest('[data-remove]');if(b)change(s=>{const m=s.media.find(m=>m.id===b.dataset.remove);if(m?.pending?.until>Date.now())return {message:'Aguarde a consulta do sábio antes de remover.'};s.media=s.media.filter(m=>m.id!==b.dataset.remove||m.done);drafts.delete(b.dataset.remove);return {};});});
 
-async function start(){initTheme();initSound();await change();setInterval(()=>{timers();if(!blocked&&Date.now()-state.cycle>=DAY)sync();if(lastMarket!==Math.floor(Date.now()/HOUR))renderInventory();},1000);}
+var playerName='';
+let cloud=null,playerRef=null,loggedIn=false,loginBusy=false,stopPlayer=null,stopFriends=null,syncBusy=false;
+const PLAYER_KEY='cronicas.playerName',IMPORT_KEY='cronicas.localImported';
+function cloudMessage(error){
+  const code=String(error?.code||'');
+  if(code.includes('permission-denied'))return 'O Firestore negou o acesso. Confira as regras de users no console Firebase.';
+  if(code.includes('unavailable'))return 'Sem conexão com o Firestore. Verifique a internet e tente novamente.';
+  return error?.message||'Não foi possível acessar o Firestore.';
+}
+function decodeSave(data){
+  const next=upgradeStats(upgradeCatalog(JSON.parse(JSON.stringify(data))));
+  if(!valid(next))throw Error('Progresso remoto inválido. Os dados foram preservados.');
+  if(!int(next.cloudRevision))next.cloudRevision=0;
+  return next;
+}
+async function read(transaction=null,ref=playerRef){
+  if(!cloud||!ref)throw Error('Entre com seu nome para acessar o progresso.');
+  const snapshot=transaction?await transaction.get(ref):await cloud.getDoc(ref);
+  if(!transaction&&snapshot.metadata.fromCache)throw Error('Aguardando conexão para confirmar o progresso na nuvem.');
+  if(!snapshot.exists())throw Error('O perfil não existe mais. Recarregue e entre novamente.');
+  return decodeSave(snapshot.data());
+}
+function storageError(error){
+  console.error('[Firestore] Progresso:',error);blocked=true;
+  $('#storage-warning').hidden=false;$('#cloud-error').textContent=cloudMessage(error)+' A ação não foi confirmada.';
+  $('#save-status').textContent='Nuvem indisponível';notify('Não foi possível confirmar a ação na nuvem. Tente reconectar.');
+}
+function cloudHealthy(){blocked=false;$('#storage-warning').hidden=true;$('#save-status').textContent='Progresso salvo na nuvem · '+playerName;}
+function change(fn=()=>({})){
+  const job=async()=>{
+    if(blocked||!loggedIn)return null;
+    $('#save-status').textContent='Salvando na nuvem…';
+    try{
+      const saved=await cloud.runTransaction(cloud.db,async transaction=>{
+        const next=await read(transaction);reset(next);
+        const before=level(next.xp),oldGold=next.gold,oldQuests=next.stats.totalQuests;
+        const result=fn(next)||{},unlocked=unlockAchievements(next);
+        if(!valid(next))throw Error('Estado inválido');
+        next.cloudRevision++;
+        transaction.set(playerRef,JSON.parse(JSON.stringify(next)));
+        return {next,before,oldGold,oldQuests,result,unlocked};
+      });
+      const {next,before,oldGold,oldQuests,result,unlocked}=saved;
+      if(next.cloudRevision>=(state.cloudRevision||0))state=next;
+      cloudHealthy();
+      const after=level(next.xp);if(after>before)result.message=(result.message||'')+` ✨ Nível ${after}: ${title(after)}!`;
+      render();if(next.stats.totalQuests>oldQuests)playSFX('check');if(next.gold>oldGold)playSFX('coin',next.stats.totalQuests>oldQuests?.12:0);
+      if(after>before)animate($('#hero-bar'),'level-up');if(result.message)notify(result.message);
+      if(after>before||unlocked.length)playSFX('levelUp',.25);
+      if(unlocked.length)notify('🏆 Conquista desbloqueada! '+unlocked.map(a=>a.name+' · '+a.game).join(' | '),true);
+      return result;
+    }catch(error){storageError(error);render();return null;}
+  };
+  const result=queue.then(job);queue=result.catch(error=>console.error('[Firestore] Fila:',error));return result;
+}
+function renderFriends(snapshot){
+  const friends=snapshot.docs.map(doc=>{const data=doc.data();return {name:doc.id,xp:int(data.xp)?data.xp:0,gold:int(data.gold)?data.gold:0};}).sort((a,b)=>b.xp-a.xp||b.gold-a.gold||a.name.localeCompare(b.name,'pt-BR'));
+  $('#friends-list').innerHTML=friends.map((friend,index)=>`<li class="friend-row${friend.name===playerName?' self':''}"><span class="friend-position">${index+1}</span><div><strong>${esc(friend.name)}</strong><small>Nv. ${level(friend.xp)} · ${esc(title(level(friend.xp)))}</small></div><span class="friend-gold">${fmt(friend.gold)} Gold</span></li>`).join('')||'<li class="helper">Nenhum aventureiro registrado.</li>';
+  $('#friends-status').textContent=snapshot.metadata.fromCache?'Ranking em cache · aguardando conexão':`${friends.length} aventureiro${friends.length===1?'':'s'} · atualizado em tempo real`;
+}
+async function loadFriends(){
+  if(!loggedIn)return;stopFriends?.();stopFriends=null;
+  const users=cloud.collection(cloud.db,'users');$('#friends-status').textContent='Buscando aventureiros…';
+  try{renderFriends(await cloud.getDocs(users));}
+  catch(error){console.error('[Firestore] Ranking getDocs:',error);$('#friends-status').textContent=cloudMessage(error);}
+  stopFriends=cloud.onSnapshot(users,{includeMetadataChanges:true},renderFriends,error=>{console.error('[Firestore] Ranking ao vivo:',error);$('#friends-status').textContent=cloudMessage(error);});
+}
+function watchPlayer(){
+  stopPlayer?.();
+  stopPlayer=cloud.onSnapshot(playerRef,{includeMetadataChanges:true},snapshot=>{
+    if(snapshot.metadata.hasPendingWrites)return;
+    if(snapshot.metadata.fromCache){$('#save-status').textContent='Aguardando confirmação da nuvem…';return;}
+    try{
+      if(!snapshot.exists())throw Error('O perfil foi removido. Recarregue para entrar novamente.');
+      const next=decodeSave(snapshot.data());
+      if(next.cloudRevision>=(state.cloudRevision||0)){state=next;render();}
+    }catch(error){storageError(error);render();}
+  },error=>{storageError(error);render();});
+}
+async function loginPlayer(event){
+  event.preventDefault();if(loginBusy)return;
+  const name=$('#player-name').value.trim().normalize('NFC');
+  if(!name||name.length>80||name==='.'||name==='..'||name.includes('/')||/[\u0000-\u001f\u007f]/.test(name)||/^__.*__$/.test(name)){$('#login-status').textContent='Use um nome de 1 a 80 caracteres, sem barras ou caracteres de controle.';return;}
+  loginBusy=true;$('#login-submit').disabled=true;$('#login-status').textContent='Conectando ao seu reino…';
+  try{
+    const ready=await window.firebaseReady;if(ready.error)throw ready.error;cloud=ready;
+    const ref=cloud.doc(cloud.db,'users',name),importLocal=$('#import-local').checked&&!$('#import-local-label').hidden;
+    const saved=await cloud.runTransaction(cloud.db,async transaction=>{
+      const snapshot=await transaction.get(ref);
+      if(snapshot.exists())return {next:decodeSave(snapshot.data()),imported:false};
+      const next=importLocal?readLocal():fresh();
+      if(!valid(next))throw Error('O save local é inválido. Desmarque a importação para criar um perfil vazio.');
+      reset(next);next.cloudRevision=1;transaction.set(ref,JSON.parse(JSON.stringify(next)));return {next,imported:importLocal};
+    });
+    playerName=name;playerRef=ref;state=saved.next;loggedIn=true;cloudHealthy();
+    try{localStorage.setItem(PLAYER_KEY,name);if(saved.imported)localStorage.setItem(IMPORT_KEY,name);}catch(error){console.error('[Firestore] Preferência local:',error);}
+    $('#player-label').textContent=name;$('#app-shell').hidden=false;$('#app-shell').inert=false;$('#login-dialog').close();render();
+    watchPlayer();loadFriends();if(Date.now()-state.cycle>=DAY)await change();
+  }catch(error){console.error('[Firestore] Login:',error);$('#login-status').textContent=cloudMessage(error);}
+  finally{loginBusy=false;$('#login-submit').disabled=false;}
+}
+async function sync(){
+  if(!loggedIn||syncBusy)return;syncBusy=true;
+  const job=async()=>{try{const next=await read();if(next.cloudRevision>=(state.cloudRevision||0))state=next;cloudHealthy();render();return true;}catch(error){storageError(error);render();return false;}};
+  try{const result=queue.then(job);queue=result.catch(error=>console.error('[Firestore] Sincronização:',error));if(await result&&Date.now()-state.cycle>=DAY)await change();}
+  finally{syncBusy=false;}
+}
+$('#login-form').addEventListener('submit',loginPlayer);
+$('#login-dialog').addEventListener('cancel',event=>event.preventDefault());
+$('#cloud-retry').addEventListener('click',async()=>{await sync();if(!blocked){watchPlayer();loadFriends();}});
+$('#friends-refresh').addEventListener('click',loadFriends);
+$('#switch-player').addEventListener('click',async()=>{if(opening||validation)return;await queue;location.reload();});
+window.addEventListener('online',()=>{sync();if(loggedIn)loadFriends();});
+window.addEventListener('pagehide',()=>{stopPlayer?.();stopFriends?.();});
+window.addEventListener('pageshow',event=>{if(event.persisted&&loggedIn){watchPlayer();loadFriends();sync();}});
+
+async function start(){
+  initTheme();initSound();
+  try{$('#player-name').value=localStorage.getItem(PLAYER_KEY)||'';const canImport=!!(localStorage.getItem(KEY)||localStorage.getItem(LEGACY))&&!localStorage.getItem(IMPORT_KEY);$('#import-local-label').hidden=!canImport;$('#import-local').checked=canImport;}catch(error){console.error('[Firebase] Save local indisponível:',error);}
+  modal('login-dialog');
+  window.firebaseReady.then(ready=>{if(ready.error)$('#login-status').textContent=cloudMessage(ready.error);});
+  setInterval(()=>{if(!loggedIn)return;timers();if(!blocked&&Date.now()-state.cycle>=DAY)sync();if(lastMarket!==Math.floor(Date.now()/HOUR))renderInventory();},1000);
+}
 start();
 
 </script>
