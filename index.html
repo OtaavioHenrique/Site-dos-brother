@@ -1432,7 +1432,7 @@ function initProductivity(){
     const id=event.target.dataset.routine;if(!id||blocked||routinePending.has(id))return;
     event.target.checked=false;routinePending.add(id);renderRoutine();
     try{await change(s=>completeRoutine(s,id));}
-    finally{routinePending.delete(id);for(const input of $('[data-routine]'))if(input.dataset.routine===id)input.disabled=blocked||state.routine.find(t=>t.id===id)?.done;for(const button of $('[data-routine-remove]'))if(button.dataset.routineRemove===id)button.disabled=blocked;}
+    finally{routinePending.delete(id);for(const input of $$('[data-routine]'))if(input.dataset.routine===id)input.disabled=blocked||state.routine.find(t=>t.id===id)?.done;for(const button of $$('[data-routine-remove]'))if(button.dataset.routineRemove===id)button.disabled=blocked;}
   });
   $('#routine-panel').addEventListener('click',async event=>{
     const button=event.target.closest('[data-routine-remove]');if(!button||blocked)return;
